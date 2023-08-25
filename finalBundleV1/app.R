@@ -1,16 +1,21 @@
+#importing the packages
 library(shiny)
 library(shinyBS)
 library(ggplot2)
 
+#importing the prediction functions
 source('prediction.R', local = TRUE)
 
 ui <- 
 fluidPage(
   pageWithSidebar(
     
+    #header text
     headerPanel('Software Project Prediction System'),
     
+    #side section 
      sidebarPanel(
+       #system information panel
        conditionalPanel(
          condition = "false",
          selectInput(
@@ -20,6 +25,8 @@ fluidPage(
            selected = ""
          )
        ),
+       
+      #system inputs - 16 questions about critical success factors
       selectizeInput("sufficient_development_staff", "Software staff was sufficient to complete the project on-time", choices =  list(
         "Yes",
         "No")),
@@ -38,6 +45,8 @@ fluidPage(
                   ),
                   choices =  list( "Yes","No")
       ),
+      
+      #more info pop over for the reuse assets introduced question
       bsPopover(
         id = "reuse_assets_info",
         title = "More information",
@@ -60,6 +69,8 @@ fluidPage(
                      ),
                      choices =  list("Yes","No")
       ),
+      
+      #more info pop over for the top Management support question
       bsPopover(
         id = "top_management_support_info",
         title = "More information",
@@ -77,6 +88,8 @@ fluidPage(
                      ),
                      choices =  list("Yes","No")
       ),
+      
+      #more info pop over for the domain Analysis question
       bsPopover(
         id = "domain_analysis_info",
         title = "More information",
@@ -100,6 +113,8 @@ fluidPage(
                      ),
                      choices =  list("Yes","No")
       ),
+      
+      #more info pop over for the communication question
       bsPopover(
         id = "communication_info",
         title = "More information",
@@ -132,6 +147,8 @@ fluidPage(
                      ),
                      choices =  list("Yes","No")
       ),
+      
+      #more info pop over for the human factors question
       bsPopover(
         id = "human_factors_info",
         title = "More information",
@@ -144,31 +161,39 @@ fluidPage(
       actionButton("submit", "Submit", class = "btn-primary"),
       
     ),
+    
+    #main body section
     mainPanel(
+      #View System information section with collapse functionality
       bsCollapse(id = "prediction_analysis", open = "System info",
                  bsCollapsePanel("View System info", "", 
                                  'This system is designed to predict the final outcome (success/failure) of your software project based on 16 success factors that you will be selecting from the side panel.
                                  To view the predicted outcome and the importance plots of the success factors, please select your options from the right side panel and click submit. This system will guide you to identify the most important factors at an initial stage of the project. By following these success factors you will be able to achieve a higher level of success in your project and thereby reducing the chances of potential project failure at the end.',
                                  style = "info")
       ),
-      verbatimTextOutput("prediction"),
-      verbatimTextOutput("info1"),
-      plotOutput("plot")
+      verbatimTextOutput("prediction"), #prediction result output
+      verbatimTextOutput("info1"),  #text about importance factors
+      plotOutput("plot")  #Important factors barplot representation
     )
   ), title = "Software Project Prediction System")
 
 server <- function(input, output, session) {
   
+  #submit button to get prediction outputs
   actionButton("submit", "Submit")
   
+  #update the collapse functionality of view system information panel on click
   observe({
     shinyBS::updateCollapse(session,
                             "prediction_analysis",
                             open = input$activePanelSelect)
   })
   
+  #on submit functionality
   observeEvent(c(input$submit), ignoreInit = TRUE, {
-    prediction<- function(return_only_prediction){
+    prediction<- function(){
+      
+      #make the prediction based on 16 inputs/questions
      result_list <- make_prediction( isolate(list(sufficient_development_staff = input$sufficient_development_staff, 
                                   sufficient_overall_staff = input$sufficient_overall_staff,
                                   experienced_project_manager = input$experienced_project_manager, 
@@ -186,24 +211,29 @@ server <- function(input, output, session) {
                                   sufficient_budget_allocation = input$sufficient_budget_allocation,
                                   human_factors = input$human_factors
                                   )
-                               ), return_only_prediction
+                               )
                        )
      return(result_list)
     }
     
-    returned_result_list <- prediction(FALSE)
+    #get all prediction outputs including important factors by random forest and probability of the prediction
+    returned_result_list <- prediction()
     imp <- data.frame(returned_result_list['imp'])
     final_prediction <- returned_result_list['prec']
     probability_of_success_or_failure = returned_result_list['prob']
 
+    #set outputs to the main body section
     output$prediction <-renderPrint(get_prediction(final_prediction$prec, probability_of_success_or_failure$prob))
     output$info1 <-renderText( paste("To increase the chances of success in your project",
                                      " You may consider the most important success factors plotted below", sep="\n"))
     imp_asc <- imp[order(-imp$imp.MeanDecreaseAccuracy),]
     
+    #add colours to the bar plot
     color_function <- colorRampPalette( c( "#104E8B" , "#CCCCCC") )
+    #Reduce color shade as importance decreases 
     color_ramp <- color_function( n = nrow( x = imp ) )
             
+    #plot the importance as a bar graph
     output$plot <- renderPlot({
       x <- barplot(imp_asc$imp.MeanDecreaseAccuracy, 
                    beside=TRUE, 
@@ -220,5 +250,5 @@ server <- function(input, output, session) {
   }
 
 
-
+#run the app as a shiny app
 shinyApp(ui, server)
