@@ -36,7 +36,7 @@ make_prediction <- function(input_data){
                                 number = 10,
                                 search = "grid")
   
-  #modeling Random forest using its default values
+  #modelling random forest using its default values
   default_rf <- train(successful~.,
                       data = project_cf_data,
                       method = "rf",
