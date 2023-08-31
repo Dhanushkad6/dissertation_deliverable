@@ -70,7 +70,7 @@ fluidPage(
                      choices =  list("Yes","No")
       ),
       
-      #more info pop over for the top Management support question
+      #more info pop over for the top management support question
       bsPopover(
         id = "top_management_support_info",
         title = "More information",
@@ -89,7 +89,7 @@ fluidPage(
                      choices =  list("Yes","No")
       ),
       
-      #more info pop over for the domain Analysis question
+      #more info pop over for the domain analysis question
       bsPopover(
         id = "domain_analysis_info",
         title = "More information",
@@ -164,7 +164,7 @@ fluidPage(
     
     #main body section
     mainPanel(
-      #View System information section with collapse functionality
+      #view system information section with collapse functionality
       bsCollapse(id = "prediction_analysis", open = "System info",
                  bsCollapsePanel("View System info", "", 
                                  'This system is designed to predict the final outcome (success/failure) of your software project based on 16 success factors that you will be selecting from the side panel.
